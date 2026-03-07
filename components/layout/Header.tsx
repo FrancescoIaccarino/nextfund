@@ -88,6 +88,17 @@ export function Header() {
             Bandi
           </Link>
           <Link
+            href="/bandi-updated"
+            className={cn(
+              "text-base font-medium transition-colors",
+              scrolled
+                ? "text-muted-foreground hover:text-foreground"
+                : "text-white/80 hover:text-white"
+            )}
+          >
+            Bandi Automatici
+          </Link>
+          <Link
             href="/insights"
             className={cn(
               "text-base font-medium transition-colors",
@@ -175,6 +186,13 @@ export function Header() {
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   Bandi
+                </Link>
+                <Link
+                  href="/bandi-updated"
+                  className="text-lg font-medium text-foreground hover:text-nextfund-blue transition-colors py-2"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Bandi Automatici
                 </Link>
                 <Link
                   href="/insights"

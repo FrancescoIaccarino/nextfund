@@ -1,8 +1,10 @@
 // scripts/fetch-bandi.js
-// Scarica i bandi da incentivi.gov.it e li salva nel database Supabase.
+// Scarica i bandi da incentivi.gov.it via Solr API e li salva nel database Supabase.
 // Viene eseguito ogni notte alle 2:00 da GitHub Actions.
+//
+// FIX: Il CSV non e' un file statico. La pagina /it/open-data genera il CSV
+// dinamicamente interrogando l'endpoint Solr interno. Chiamiamo l'API direttamente.
 
-import fetch from 'node-fetch';
 import { parse } from 'csv-parse/sync';
 import { createClient } from '@supabase/supabase-js';
 
@@ -11,24 +13,24 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_KEY
 );
 
-async function getCsvUrl() {
-  console.log('Cerco il link CSV aggiornato...');
-  try {
-    const res = await fetch('https://www.incentivi.gov.it/it/open-data', {
-      headers: { 'User-Agent': 'Mozilla/5.0', 'Accept-Language': 'it-IT' }
-    });
-    const html = await res.text();
-    const match = html.match(/href="(\/sites\/default\/files\/open-data\/[^"]+\.csv)"/);
-    if (match) return 'https://www.incentivi.gov.it' + match[1];
-  } catch (e) {
-    console.log('Pagina non raggiungibile, uso URL di fallback');
-  }
-  const oggi = new Date();
-  const anno = oggi.getFullYear();
-  const mese = String(oggi.getMonth() + 1).padStart(2, '0');
-  const giorno = String(oggi.getDate()).padStart(2, '0');
-  return `https://www.incentivi.gov.it/sites/default/files/open-data/${anno}-${mese}-${giorno}_opendata-export.csv`;
-}
+// Endpoint Solr con alias dei campi che corrispondono alle colonne del DB
+const SOLR_BASE = 'https://www.incentivi.gov.it/solr/coredrupal/select';
+const SOLR_FIELDS = [
+  'ID_Incentivo:zs_nid',
+  'Titolo:zs_title',
+  'Descrizione:zs_body',
+  'Data_apertura:zs_field_open_date',
+  'Data_chiusura:zs_field_close_date',
+  'Forma_agevolazione:zm_field_support_form_value',
+  'Regioni:zm_field_regions_value',
+  'Soggetto_Concedente:zs_field_subject_grant',
+  'Link_istituzionale:zs_field_link',
+].join(',');
+
+const CSV_URL =
+  SOLR_BASE +
+  '?q=*%3A*&q.op=OR&wt=csv&rows=100000&fl=' +
+  encodeURIComponent(SOLR_FIELDS);
 
 function calcolaStato(dataApertura, dataChiusura) {
   const oggi = new Date();
@@ -41,10 +43,17 @@ function calcolaStato(dataApertura, dataChiusura) {
 
 async function main() {
   try {
-    const csvUrl = await getCsvUrl();
-    console.log('Scarico:', csvUrl);
-    const res = await fetch(csvUrl);
-    if (!res.ok) throw new Error('Errore download: ' + res.status);
+    console.log('Scarico bandi da Solr API...');
+    const res = await fetch(CSV_URL, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; NextFund-Bot/1.0)',
+        'Accept': 'text/csv,*/*',
+        'Accept-Language': 'it-IT,it;q=0.9',
+      },
+    });
+
+    if (!res.ok) throw new Error('Errore download: ' + res.status + ' ' + res.statusText);
+
     const testo = await res.text();
     console.log('File scaricato, dimensione:', testo.length, 'caratteri');
 
@@ -54,8 +63,9 @@ async function main() {
       delimiter: ',',
       bom: true,
       relax_quotes: true,
-      relax_column_count: true
+      relax_column_count: true,
     });
+
     console.log('Trovati ' + righe.length + ' bandi');
 
     const bandi = righe
@@ -72,10 +82,10 @@ async function main() {
         soggetto_concedente: r.Soggetto_Concedente || null,
         link_istituzionale: r.Link_istituzionale || null,
         fonte: 'incentivi.gov.it',
-        aggiornato_il: new Date().toISOString()
+        aggiornato_il: new Date().toISOString(),
       }));
 
-    console.log('Salvo ' + bandi.length + ' bandi nel database...');
+    console.log('Bandi validi:', bandi.length);
     let salvati = 0;
     for (let i = 0; i < bandi.length; i += 500) {
       const blocco = bandi.slice(i, i + 500);

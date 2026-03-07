@@ -1,9 +1,7 @@
 // scripts/fetch-bandi.js
-// Scarica i bandi da incentivi.gov.it e li salva nel database Supabase.
-// Viene eseguito ogni notte alle 2:00 da GitHub Actions.
-//
-// STRATEGIA: Il CSV è un file statico su incentivi.gov.it con URL datata.
-// Prima cerca il link dalla pagina open-data, poi prova le ultime date.
+// Scarica i bandi da incentivi.gov.it e li salva su Supabase.
+// GitHub Actions (Azure US) non raggiunge incentivi.gov.it direttamente:
+// usa allorigins.win (Cloudflare Workers, globale) come proxy fallback.
 
 import { parse } from 'csv-parse/sync';
 import { createClient } from '@supabase/supabase-js';
@@ -15,51 +13,73 @@ const supabase = createClient(
 
 const BASE_URL = 'https://www.incentivi.gov.it';
 const OPEN_DATA_PAGE = BASE_URL + '/it/open-data';
-const CSV_PATH_PREFIX = '/sites/default/files/open-data/';
+const CSV_PATH = '/sites/default/files/open-data/';
+// Proxy Cloudflare Workers - raggiunge server italiani anche da US Azure
+const PROXY = 'https://api.allorigins.win/raw?url=';
 
-// Cerca il link CSV nella pagina open-data, poi prova date recenti
-async function findCsvUrl() {
-  console.log('Cerco il link CSV nella pagina open-data...');
+// Fetch con fallback automatico al proxy se il diretto fallisce
+async function fetchWithFallback(url, timeoutMs = 20000) {
+  // 1. Tenta diretto
   try {
-    const resp = await fetch(OPEN_DATA_PAGE, {
-      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; NextFund-Bot/1.0)' },
-      signal: AbortSignal.timeout(15000),
-    });
+    const r = await fetch(url, { signal: AbortSignal.timeout(timeoutMs) });
+    if (r.ok) { console.log('  OK diretto: ' + url); return r; }
+  } catch (e) {
+    console.log('  Diretto fallito (' + e.message + '), provo proxy...');
+  }
+  // 2. Tenta via allorigins proxy
+  const proxiedUrl = PROXY + encodeURIComponent(url);
+  const r = await fetch(proxiedUrl, { signal: AbortSignal.timeout(timeoutMs + 15000) });
+  if (!r.ok) throw new Error('HTTP ' + r.status + ' anche via proxy per ' + url);
+  console.log('  OK via proxy: ' + url);
+  return r;
+}
+
+// Trova l'URL del CSV dal portale open-data, poi da date recenti
+async function findCsvUrl() {
+  // 1. Cerca il link nella pagina HTML
+  console.log('Cerco link CSV nella pagina open-data...');
+  try {
+    const resp = await fetchWithFallback(OPEN_DATA_PAGE, 20000);
     const html = await resp.text();
     const match = html.match(/href="(\/sites\/default\/files\/open-data\/[^"]+\.csv)"/i);
     if (match) {
-      console.log('Link CSV trovato nella pagina: ' + match[1]);
+      console.log('Link trovato nella pagina: ' + match[1]);
       return BASE_URL + match[1];
     }
+    console.warn('Pagina caricata ma nessun link CSV trovato');
   } catch (e) {
-    console.warn('Pagina open-data non raggiungibile: ' + e.message);
+    console.warn('Impossibile caricare pagina: ' + e.message);
   }
 
-  // Fallback: prova le ultime 90 date (il file viene aggiornato periodicamente)
-  console.log('Provo con date recenti...');
+  // 2. Prova le ultime 10 date direttamente (timeout breve)
+  console.log('Provo date recenti (ultimi 10 giorni)...');
   const today = new Date();
-  for (let daysAgo = 0; daysAgo <= 90; daysAgo++) {
-    const d = new Date(today);
-    d.setDate(today.getDate() - daysAgo);
-    const year = d.getFullYear();
-    const month = d.getMonth() + 1;
-    const day = d.getDate();
-    const url = BASE_URL + CSV_PATH_PREFIX + year + '-' + month + '-' + day + '_opendata-export.csv';
+  for (let d = 0; d <= 10; d++) {
+    const dt = new Date(today);
+    dt.setDate(today.getDate() - d);
+    const url = BASE_URL + CSV_PATH + dt.getFullYear() + '-' + (dt.getMonth()+1) + '-' + dt.getDate() + '_opendata-export.csv';
     try {
-      const head = await fetch(url, {
-        method: 'HEAD',
-        headers: { 'User-Agent': 'Mozilla/5.0 (compatible; NextFund-Bot/1.0)' },
-        signal: AbortSignal.timeout(8000),
-      });
-      if (head.ok) {
-        console.log('File CSV trovato: ' + url);
-        return url;
-      }
-    } catch (_) {
-      // continua al giorno precedente
-    }
+      const r = await fetch(url, { method: 'HEAD', signal: AbortSignal.timeout(3000) });
+      if (r.ok) { console.log('File trovato diretto: ' + url); return url; }
+    } catch (_) {}
   }
-  throw new Error('Nessun file CSV trovato negli ultimi 90 giorni');
+
+  // 3. Prova le ultime 10 date via proxy
+  console.log('Provo date recenti via proxy...');
+  for (let d = 0; d <= 10; d++) {
+    const dt = new Date(today);
+    dt.setDate(today.getDate() - d);
+    const url = BASE_URL + CSV_PATH + dt.getFullYear() + '-' + (dt.getMonth()+1) + '-' + dt.getDate() + '_opendata-export.csv';
+    try {
+      const r = await fetch(PROXY + encodeURIComponent(url), { method: 'HEAD', signal: AbortSignal.timeout(8000) });
+      if (r.ok) { console.log('File trovato via proxy: ' + url); return url; }
+    } catch (_) {}
+  }
+
+  // 4. Fallback assoluto: URL noto da aprile 2025
+  const fallback = BASE_URL + CSV_PATH + '2025-4-5_opendata-export.csv';
+  console.log('Uso URL di fallback (aprile 2025): ' + fallback);
+  return fallback;
 }
 
 async function main() {
@@ -68,34 +88,17 @@ async function main() {
   const csvUrl = await findCsvUrl();
   console.log('Scarico CSV da: ' + csvUrl);
 
-  const resp = await fetch(csvUrl, {
-    headers: { 'User-Agent': 'Mozilla/5.0 (compatible; NextFund-Bot/1.0)' },
-    signal: AbortSignal.timeout(120000),
-  });
-  if (!resp.ok) throw new Error('HTTP ' + resp.status + ' da ' + csvUrl);
-
+  const resp = await fetchWithFallback(csvUrl, 120000);
   const csvText = await resp.text();
   console.log('CSV scaricato: ' + csvText.length + ' caratteri');
 
-  // Prova prima con punto e virgola, poi con virgola
+  // Determina il delimitatore (;  o ,)
   let records;
   try {
-    records = parse(csvText, {
-      columns: true,
-      skip_empty_lines: true,
-      delimiter: ';',
-      trim: true,
-      bom: true,
-    });
+    records = parse(csvText, { columns: true, skip_empty_lines: true, delimiter: ';', trim: true, bom: true });
     if (records.length < 2) throw new Error('troppo pochi record con ;');
   } catch (_) {
-    records = parse(csvText, {
-      columns: true,
-      skip_empty_lines: true,
-      delimiter: ',',
-      trim: true,
-      bom: true,
-    });
+    records = parse(csvText, { columns: true, skip_empty_lines: true, delimiter: ',', trim: true, bom: true });
   }
   console.log('Trovati ' + records.length + ' bandi nel CSV');
 
@@ -106,7 +109,6 @@ async function main() {
     let stato = 'aperto';
     if (chiusura && chiusura < now) stato = 'chiuso';
     else if (apertura && apertura > now) stato = 'in_arrivo';
-
     return {
       id: String(r.ID_Incentivo || '').trim(),
       titolo: r.Titolo || '',
@@ -123,19 +125,15 @@ async function main() {
   }).filter(b => b.id);
 
   console.log('Upsert di ' + bandi.length + ' bandi su Supabase...');
-
   const BATCH = 500;
   let inserted = 0;
   for (let i = 0; i < bandi.length; i += BATCH) {
     const batch = bandi.slice(i, i + BATCH);
-    const { error } = await supabase
-      .from('bandi')
-      .upsert(batch, { onConflict: 'id' });
+    const { error } = await supabase.from('bandi').upsert(batch, { onConflict: 'id' });
     if (error) throw new Error('Supabase error: ' + error.message);
     inserted += batch.length;
     console.log('  Inseriti ' + inserted + '/' + bandi.length + '...');
   }
-
   console.log('Completato! ' + bandi.length + ' bandi aggiornati.');
 }
 

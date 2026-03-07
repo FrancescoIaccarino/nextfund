@@ -1,9 +1,9 @@
 // scripts/fetch-bandi.js
-// Scarica i bandi da incentivi.gov.it via Solr API e li salva nel database Supabase.
+// Scarica i bandi da incentivi.gov.it e li salva nel database Supabase.
 // Viene eseguito ogni notte alle 2:00 da GitHub Actions.
 //
-// FIX: Il CSV non e' un file statico. La pagina /it/open-data genera il CSV
-// dinamicamente interrogando l'endpoint Solr interno. Chiamiamo l'API direttamente.
+// STRATEGIA: Il CSV è un file statico su incentivi.gov.it con URL datata.
+// Prima cerca il link dalla pagina open-data, poi prova le ultime date.
 
 import { parse } from 'csv-parse/sync';
 import { createClient } from '@supabase/supabase-js';
@@ -13,95 +13,133 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_KEY
 );
 
-// Endpoint Solr con alias dei campi che corrispondono alle colonne del DB
-const SOLR_BASE = 'https://www.incentivi.gov.it/solr/coredrupal/select';
-const SOLR_FIELDS = [
-  'ID_Incentivo:zs_nid',
-  'Titolo:zs_title',
-  'Descrizione:zs_body',
-  'Data_apertura:zs_field_open_date',
-  'Data_chiusura:zs_field_close_date',
-  'Forma_agevolazione:zm_field_support_form_value',
-  'Regioni:zm_field_regions_value',
-  'Soggetto_Concedente:zs_field_subject_grant',
-  'Link_istituzionale:zs_field_link',
-].join(',');
+const BASE_URL = 'https://www.incentivi.gov.it';
+const OPEN_DATA_PAGE = BASE_URL + '/it/open-data';
+const CSV_PATH_PREFIX = '/sites/default/files/open-data/';
 
-const CSV_URL =
-  SOLR_BASE +
-  '?q=*%3A*&q.op=OR&wt=csv&rows=100000&fl=' +
-  encodeURIComponent(SOLR_FIELDS);
+// Cerca il link CSV nella pagina open-data, poi prova date recenti
+async function findCsvUrl() {
+  console.log('Cerco il link CSV nella pagina open-data...');
+  try {
+    const resp = await fetch(OPEN_DATA_PAGE, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; NextFund-Bot/1.0)' },
+      signal: AbortSignal.timeout(15000),
+    });
+    const html = await resp.text();
+    const match = html.match(/href="(\/sites\/default\/files\/open-data\/[^"]+\.csv)"/i);
+    if (match) {
+      console.log('Link CSV trovato nella pagina: ' + match[1]);
+      return BASE_URL + match[1];
+    }
+  } catch (e) {
+    console.warn('Pagina open-data non raggiungibile: ' + e.message);
+  }
 
-function calcolaStato(dataApertura, dataChiusura) {
-  const oggi = new Date();
-  const apertura = dataApertura ? new Date(dataApertura) : null;
-  const chiusura = dataChiusura ? new Date(dataChiusura) : null;
-  if (chiusura && chiusura < oggi) return 'chiuso';
-  if (apertura && apertura > oggi) return 'in_arrivo';
-  return 'aperto';
+  // Fallback: prova le ultime 90 date (il file viene aggiornato periodicamente)
+  console.log('Provo con date recenti...');
+  const today = new Date();
+  for (let daysAgo = 0; daysAgo <= 90; daysAgo++) {
+    const d = new Date(today);
+    d.setDate(today.getDate() - daysAgo);
+    const year = d.getFullYear();
+    const month = d.getMonth() + 1;
+    const day = d.getDate();
+    const url = BASE_URL + CSV_PATH_PREFIX + year + '-' + month + '-' + day + '_opendata-export.csv';
+    try {
+      const head = await fetch(url, {
+        method: 'HEAD',
+        headers: { 'User-Agent': 'Mozilla/5.0 (compatible; NextFund-Bot/1.0)' },
+        signal: AbortSignal.timeout(8000),
+      });
+      if (head.ok) {
+        console.log('File CSV trovato: ' + url);
+        return url;
+      }
+    } catch (_) {
+      // continua al giorno precedente
+    }
+  }
+  throw new Error('Nessun file CSV trovato negli ultimi 90 giorni');
 }
 
 async function main() {
+  console.log('Avvio aggiornamento bandi...');
+
+  const csvUrl = await findCsvUrl();
+  console.log('Scarico CSV da: ' + csvUrl);
+
+  const resp = await fetch(csvUrl, {
+    headers: { 'User-Agent': 'Mozilla/5.0 (compatible; NextFund-Bot/1.0)' },
+    signal: AbortSignal.timeout(120000),
+  });
+  if (!resp.ok) throw new Error('HTTP ' + resp.status + ' da ' + csvUrl);
+
+  const csvText = await resp.text();
+  console.log('CSV scaricato: ' + csvText.length + ' caratteri');
+
+  // Prova prima con punto e virgola, poi con virgola
+  let records;
   try {
-    console.log('Scarico bandi da Solr API...');
-    const res = await fetch(CSV_URL, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; NextFund-Bot/1.0)',
-        'Accept': 'text/csv,*/*',
-        'Accept-Language': 'it-IT,it;q=0.9',
-      },
+    records = parse(csvText, {
+      columns: true,
+      skip_empty_lines: true,
+      delimiter: ';',
+      trim: true,
+      bom: true,
     });
-
-    if (!res.ok) throw new Error('Errore download: ' + res.status + ' ' + res.statusText);
-
-    const testo = await res.text();
-    console.log('File scaricato, dimensione:', testo.length, 'caratteri');
-
-    const righe = parse(testo, {
+    if (records.length < 2) throw new Error('troppo pochi record con ;');
+  } catch (_) {
+    records = parse(csvText, {
       columns: true,
       skip_empty_lines: true,
       delimiter: ',',
+      trim: true,
       bom: true,
-      relax_quotes: true,
-      relax_column_count: true,
     });
-
-    console.log('Trovati ' + righe.length + ' bandi');
-
-    const bandi = righe
-      .filter(r => r.ID_Incentivo)
-      .map(r => ({
-        id: String(r.ID_Incentivo).trim(),
-        titolo: r.Titolo || null,
-        descrizione: r.Descrizione ? r.Descrizione.slice(0, 3000) : null,
-        data_apertura: r.Data_apertura ? r.Data_apertura.split('T')[0] : null,
-        data_chiusura: r.Data_chiusura ? r.Data_chiusura.split('T')[0] : null,
-        stato: calcolaStato(r.Data_apertura, r.Data_chiusura),
-        forma_agevolazione: r.Forma_agevolazione || null,
-        regioni: r.Regioni || null,
-        soggetto_concedente: r.Soggetto_Concedente || null,
-        link_istituzionale: r.Link_istituzionale || null,
-        fonte: 'incentivi.gov.it',
-        aggiornato_il: new Date().toISOString(),
-      }));
-
-    console.log('Bandi validi:', bandi.length);
-    let salvati = 0;
-    for (let i = 0; i < bandi.length; i += 500) {
-      const blocco = bandi.slice(i, i + 500);
-      const { error } = await supabase.from('bandi').upsert(blocco, { onConflict: 'id' });
-      if (error) {
-        console.error('Errore blocco ' + i + ':', error.message);
-      } else {
-        salvati += blocco.length;
-        console.log('Salvati ' + salvati + '/' + bandi.length);
-      }
-    }
-    console.log('Aggiornamento completato!');
-  } catch (err) {
-    console.error('Errore fatale:', err.message);
-    process.exit(1);
   }
+  console.log('Trovati ' + records.length + ' bandi nel CSV');
+
+  const now = new Date();
+  const bandi = records.map(r => {
+    const apertura = r.Data_apertura ? new Date(r.Data_apertura) : null;
+    const chiusura = r.Data_chiusura ? new Date(r.Data_chiusura) : null;
+    let stato = 'aperto';
+    if (chiusura && chiusura < now) stato = 'chiuso';
+    else if (apertura && apertura > now) stato = 'in_arrivo';
+
+    return {
+      id: String(r.ID_Incentivo || '').trim(),
+      titolo: r.Titolo || '',
+      descrizione: r.Descrizione || '',
+      data_apertura: r.Data_apertura || null,
+      data_chiusura: r.Data_chiusura || null,
+      forma_agevolazione: r.Forma_agevolazione || '',
+      regioni: r.Regioni || '',
+      soggetto_concedente: r.Soggetto_Concedente || '',
+      link_istituzionale: r.Link_istituzionale || '',
+      stato,
+      aggiornato_il: new Date().toISOString(),
+    };
+  }).filter(b => b.id);
+
+  console.log('Upsert di ' + bandi.length + ' bandi su Supabase...');
+
+  const BATCH = 500;
+  let inserted = 0;
+  for (let i = 0; i < bandi.length; i += BATCH) {
+    const batch = bandi.slice(i, i + BATCH);
+    const { error } = await supabase
+      .from('bandi')
+      .upsert(batch, { onConflict: 'id' });
+    if (error) throw new Error('Supabase error: ' + error.message);
+    inserted += batch.length;
+    console.log('  Inseriti ' + inserted + '/' + bandi.length + '...');
+  }
+
+  console.log('Completato! ' + bandi.length + ' bandi aggiornati.');
 }
 
-main();
+main().catch(err => {
+  console.error('Errore fatale:', err.message);
+  process.exit(1);
+});

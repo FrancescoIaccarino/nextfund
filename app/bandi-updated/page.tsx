@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js'
+→··import { createClient } from '@supabase/supabase-js'
 import Link from 'next/link'
 import PageHeader from '@/components/layout/PageHeader'
 

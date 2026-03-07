@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
+export const preferredRegion = 'fra1'; // Run from Frankfurt EU - incentivi.gov.it blocks non-EU IPs
+
 // Full Solr API URL - same one called by the "Scarica CSV" button on incentivi.gov.it
 const SOLR_CSV_URL =
   'https://www.incentivi.gov.it/solr/coredrupal/select?q.op=OR&wt=csv&rows=8000' +

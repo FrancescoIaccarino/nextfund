@@ -9,16 +9,17 @@ jobs:
   fetch-bandi:
     runs-on: ubuntu-latest
     steps:
-      - name: Scarica il codice della repo
-        uses: actions/checkout@v4
-      - name: Installa Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-      - name: Installa le librerie necessarie
-        run: npm install node-fetch csv-parse @supabase/supabase-js
-      - name: Esegui lo script di aggiornamento bandi
-        run: node scripts/fetch-bandi.js
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+      - name: Chiama l'API di aggiornamento bandi
+        run: |
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+            -H "Content-Type: application/json" \
+            https://nextfund-five.vercel.app/api/refresh-bandi)
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | head -n-1)
+          echo "Response: $BODY"
+          echo "HTTP status: $HTTP_CODE"
+          if [ "$HTTP_CODE" -ne 200 ]; then
+            echo "Errore: HTTP $HTTP_CODE"
+            exit 1
+          fi
+          echo "Aggiornamento completato con successo!"

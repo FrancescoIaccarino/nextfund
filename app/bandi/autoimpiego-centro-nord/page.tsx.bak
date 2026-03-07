@@ -1,0 +1,178 @@
+import { BandoHero } from "@/components/bandi/BandoHero"
+import { BandoNavigation } from "@/components/bandi/BandoNavigation"
+import { BandoSection } from "@/components/bandi/BandoSection"
+import { AgevolazioniCard } from "@/components/bandi/AgevolazioniCard"
+import { SettoriTags } from "@/components/bandi/SettoriTags"
+import { CTAButton } from "@/components/bandi/CTAButton"
+import { StatisticheChart } from "@/components/bandi/StatisticheChart"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { CheckCircle2, MapPin, Building2, Calendar, TrendingUp } from "lucide-react"
+import type { Metadata } from "next"
+
+export const metadata: Metadata = {
+  title: "Autoimpiego Centro-Nord | NextFund Advisory",
+  description: "Scopri come ottenere finanziamenti per Autoimpiego Centro-Nord. Fondo perduto, tasso zero e agevolazioni disponibili.",
+}
+
+const navItems = [
+  { id: "cose", label: "Cos'è" },
+  { id: "chi-si-rivolge", label: "A chi si rivolge" },
+  { id: "cosa-finanzia", label: "Cosa finanzia" },
+  { id: "agevolazioni", label: "Agevolazioni" },
+  { id: "requisiti", label: "Requisiti" },
+  { id: "come-fare-domanda", label: "Come fare domanda" },
+  { id: "statistiche", label: "Statistiche" },
+]
+
+export default function BandoPage() {
+  return (
+    &lt;div>
+      &lt;BandoHero
+        titolo="Autoimpiego Centro-Nord"
+        sottotitolo="Ministero delle Imprese e del Made in Italy (MIMIT) - gestito da Invitalia"
+        stato="Attivo"
+        categoria="startup"
+        descrizione="Avvio nuove imprese, attività libero-professionali, lavoro autonomo: macchinari, attrezzature, software, hardware, beni innovativi/digitali, start-up "
+      />
+
+      &lt;BandoNavigation items={navItems} />
+
+      &lt;BandoSection id="cose" titolo="Cos'è">
+        &lt;div className="prose prose-lg max-w-none">
+          &lt;p className="text-lg leading-relaxed">
+            Avvio nuove imprese, attività libero-professionali, lavoro autonomo: macchinari, attrezzature, software, hardware, beni innovativi/digitali, start-up o voucher fino 40k per spese avvio
+          &lt;/p>
+        &lt;/div>
+      &lt;/BandoSection>
+
+      &lt;BandoSection id="chi-si-rivolge" titolo="A chi si rivolge" variant="muted">
+        &lt;div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          &lt;Card>
+            &lt;CardHeader>
+              &lt;div className="flex items-center gap-2">
+                &lt;Building2 className="h-5 w-5 text-primary" />
+                &lt;CardTitle className="text-lg">Dimensione Azienda</CardTitle>
+              &lt;/div>
+            &lt;/CardHeader>
+            &lt;CardContent>
+              &lt;p>Persone fisiche con &lt;35 anni o disoccupate; studi professionali; liberi professionisti; piccole imprese; forme individuali, associate, societarie; imprese innovative/digitali/sostenibili</p>
+            &lt;/CardContent>
+          &lt;/Card>
+
+          &lt;Card>
+            &lt;CardHeader>
+              &lt;div className="flex items-center gap-2">
+                &lt;Calendar className="h-5 w-5 text-primary" />
+                &lt;CardTitle className="text-lg">Età Azienda</CardTitle>
+              &lt;/div>
+            &lt;/CardHeader>
+            &lt;CardContent>
+              &lt;p>Nuova impresa o costituita da max 36 mesi (possibilità proroga); persone fisiche under 35</p>
+            &lt;/CardContent>
+          &lt;/Card>
+
+          &lt;Card>
+            &lt;CardHeader>
+              &lt;div className="flex items-center gap-2">
+                &lt;MapPin className="h-5 w-5 text-primary" />
+                &lt;CardTitle className="text-lg">Localizzazione</CardTitle>
+              &lt;/div>
+            &lt;/CardHeader>
+            &lt;CardContent>
+              &lt;p className="text-sm">Centro-Nord: Piemonte, Valle d'Aosta, Liguria, Lombardia, Veneto, Friuli-Venezia Giulia, Trentino-Alto Adige, Emilia-Romagna, Toscana, Lazio, Umbria, Marche (12 regioni)</p>
+            &lt;/CardContent>
+          &lt;/Card>
+        &lt;/div>
+
+        &lt;div className="mt-8">
+          &lt;h3 className="mb-4 text-xl font-semibold">Settori Ammessi</h3>
+          &lt;SettoriTags settori="Industria, artigianato, trasformazione prodotti agricoli, servizi, commercio, turismo, attività libero-professionali" />
+        &lt;/div>
+      &lt;/BandoSection>
+
+      &lt;BandoSection id="cosa-finanzia" titolo="Cosa finanzia">
+        &lt;div className="prose prose-lg max-w-none">
+          &lt;p className="text-lg leading-relaxed">
+            Avvio nuove imprese, attività libero-professionali, lavoro autonomo: macchinari, attrezzature, software, hardware, beni innovativi/digitali, start-up o voucher fino 40k per spese avvio
+          &lt;/p>
+        &lt;/div>
+      &lt;/BandoSection>
+
+      &lt;BandoSection id="agevolazioni" titolo="Agevolazioni" variant="muted">
+        &lt;AgevolazioniCard
+          investimentoMin="€ 0 (no minimo)"
+          investimentoMax="€ 200.000 (investimento massimo programma spesa)"
+          fondoPerduto="100% fondo perduto: Voucher €30-40k per spese avvio; Contributo 65% (fino €120k) + 60% (€120-200k) per investimenti"
+          tassoZero="No finanziamento aggiuntivo; il fondo perduto è la forma principale di agevolazione"
+          tassoInteresse="No tasso; fondo perduto 100%"
+          durataFinanziamento="Rata unica o rate (termine non specificato in dettaglio)"
+          valoreMedio="260k €"
+        />
+      &lt;/BandoSection>
+
+      &lt;BandoSection id="requisiti" titolo="Requisiti e Note">
+        &lt;div className="space-y-6">
+          &lt;Card>
+            &lt;CardHeader>
+              &lt;div className="flex items-center gap-2">
+                &lt;TrendingUp className="h-5 w-5 text-primary" />
+                &lt;CardTitle className="text-lg">Fatturato Massimo</CardTitle>
+              &lt;/div>
+            &lt;/CardHeader>
+            &lt;CardContent>
+              &lt;p>Qualsiasi fatturato per imprese neo-costituite</p>
+            &lt;/CardContent>
+          &lt;/Card>
+
+          &lt;div>
+            &lt;h3 className="mb-4 flex items-center gap-2 text-xl font-semibold">
+              &lt;CheckCircle2 className="h-5 w-5 text-primary" />
+              Note e Requisiti Speciali
+            &lt;/h3>
+            &lt;div className="prose max-w-none rounded-lg border bg-muted/50 p-6">
+              &lt;p className="text-sm leading-relaxed">Dotazione: €219,6 milioni. Target: persone fisiche under 35 O disoccupate (no vincolo età); studi professionali; liberi professionisti; piccole imprese; preferenza giovani, donne, disoccupati. Localizzazione: 12 regioni Centro-Nord. Sportello aperto piattaforma online 2025. Forme agevolazione: voucher €30-40k (100% FP) + investimenti 65% (€0-120k) / 60% (€120-200k). Obblighi mantenimento 5 anni. Documentazione: SPID/CIE/CNS, business plan, dichiarazione requisiti</p>
+            &lt;/div>
+          &lt;/div>
+        &lt;/div>
+      &lt;/BandoSection>
+
+      &lt;BandoSection id="come-fare-domanda" titolo="Come fare domanda" variant="muted">
+        &lt;div className="space-y-6">
+          &lt;Card>
+            &lt;CardHeader>
+              &lt;CardTitle>Tipo di Sportello</CardTitle>
+            &lt;/CardHeader>
+            &lt;CardContent>
+              &lt;Badge variant="outline" className="text-base">
+                Sportello
+              &lt;/Badge>
+            &lt;/CardContent>
+          &lt;/Card>
+
+          &lt;div>
+            &lt;h3 className="mb-4 text-xl font-semibold">Richiedi Assistenza</h3>
+            &lt;p className="mb-6 text-muted-foreground">
+              Il nostro team di esperti può assisterti nella compilazione della domanda
+              e nell'ottenimento del finanziamento. Contattaci per una consulenza gratuita.
+            &lt;/p>
+            &lt;CTAButton
+              linkUfficiale="https://www.invitalia.it/incentivi-e-strumenti/autoimpiego-centro-nord"
+              nomeBando="Autoimpiego Centro-Nord"
+            />
+          &lt;/div>
+        &lt;/div>
+      &lt;/BandoSection>
+
+      &lt;BandoSection id="statistiche" titolo="Statistiche e Dati">
+        &lt;StatisticheChart
+          dotazioneAssoluta="219.600.000"
+          numeroBandi="200-300 progetti/anno"
+          valoreTotale="50-80 milioni"
+          percentualeAccettazione="65-75%"
+          valoreMedio="260k €"
+        />
+      &lt;/BandoSection>
+    &lt;/div>
+  )
+}

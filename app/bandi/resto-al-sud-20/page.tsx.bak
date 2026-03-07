@@ -1,0 +1,178 @@
+import { BandoHero } from "@/components/bandi/BandoHero"
+import { BandoNavigation } from "@/components/bandi/BandoNavigation"
+import { BandoSection } from "@/components/bandi/BandoSection"
+import { AgevolazioniCard } from "@/components/bandi/AgevolazioniCard"
+import { SettoriTags } from "@/components/bandi/SettoriTags"
+import { CTAButton } from "@/components/bandi/CTAButton"
+import { StatisticheChart } from "@/components/bandi/StatisticheChart"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { CheckCircle2, MapPin, Building2, Calendar, TrendingUp } from "lucide-react"
+import type { Metadata } from "next"
+
+export const metadata: Metadata = {
+  title: "Resto al Sud 2.0 | NextFund Advisory",
+  description: "Scopri come ottenere finanziamenti per Resto al Sud 2.0. Fondo perduto, tasso zero e agevolazioni disponibili.",
+}
+
+const navItems = [
+  { id: "cose", label: "Cos'è" },
+  { id: "chi-si-rivolge", label: "A chi si rivolge" },
+  { id: "cosa-finanzia", label: "Cosa finanzia" },
+  { id: "agevolazioni", label: "Agevolazioni" },
+  { id: "requisiti", label: "Requisiti" },
+  { id: "come-fare-domanda", label: "Come fare domanda" },
+  { id: "statistiche", label: "Statistiche" },
+]
+
+export default function BandoPage() {
+  return (
+    &lt;div>
+      &lt;BandoHero
+        titolo="Resto al Sud 2.0"
+        sottotitolo="Ministero delle Imprese e del Made in Italy (MIMIT) - gestito da Invitalia"
+        stato="Attivo"
+        categoria="startup"
+        descrizione="Avvio nuove imprese, attività libero-professionali, lavoro autonomo in Sud e aree terremoto: macchinari, attrezzature, software, beni innovativi/digit"
+      />
+
+      &lt;BandoNavigation items={navItems} />
+
+      &lt;BandoSection id="cose" titolo="Cos'è">
+        &lt;div className="prose prose-lg max-w-none">
+          &lt;p className="text-lg leading-relaxed">
+            Avvio nuove imprese, attività libero-professionali, lavoro autonomo in Sud e aree terremoto: macchinari, attrezzature, software, beni innovativi/digitali/sostenibili, voucher fino 50k e investimenti fino 200k
+          &lt;/p>
+        &lt;/div>
+      &lt;/BandoSection>
+
+      &lt;BandoSection id="chi-si-rivolge" titolo="A chi si rivolge" variant="muted">
+        &lt;div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          &lt;Card>
+            &lt;CardHeader>
+              &lt;div className="flex items-center gap-2">
+                &lt;Building2 className="h-5 w-5 text-primary" />
+                &lt;CardTitle className="text-lg">Dimensione Azienda</CardTitle>
+              &lt;/div>
+            &lt;/CardHeader>
+            &lt;CardContent>
+              &lt;p>Persone fisiche con &lt;35 anni o disoccupate; studi professionali; liberi professionisti; piccole imprese; forme individuali, associate, societarie; priorità a giovani, donne, disoccupati</p>
+            &lt;/CardContent>
+          &lt;/Card>
+
+          &lt;Card>
+            &lt;CardHeader>
+              &lt;div className="flex items-center gap-2">
+                &lt;Calendar className="h-5 w-5 text-primary" />
+                &lt;CardTitle className="text-lg">Età Azienda</CardTitle>
+              &lt;/div>
+            &lt;/CardHeader>
+            &lt;CardContent>
+              &lt;p>Nuova impresa o costituita da max 36 mesi; persone fisiche under 35 o disoccupate</p>
+            &lt;/CardContent>
+          &lt;/Card>
+
+          &lt;Card>
+            &lt;CardHeader>
+              &lt;div className="flex items-center gap-2">
+                &lt;MapPin className="h-5 w-5 text-primary" />
+                &lt;CardTitle className="text-lg">Localizzazione</CardTitle>
+              &lt;/div>
+            &lt;/CardHeader>
+            &lt;CardContent>
+              &lt;p className="text-sm">Sud e aree terremoto: Abruzzo, Basilicata, Calabria, Campania, Molise, Puglia, Sardegna, Sicilia + comuni colpiti terremoto (Umbria, Marche, Lazio)</p>
+            &lt;/CardContent>
+          &lt;/Card>
+        &lt;/div>
+
+        &lt;div className="mt-8">
+          &lt;h3 className="mb-4 text-xl font-semibold">Settori Ammessi</h3>
+          &lt;SettoriTags settori="Tutti i settori: industria, artigianato, trasformazione agricola, commercio, servizi, turismo, attività libero-professionali" />
+        &lt;/div>
+      &lt;/BandoSection>
+
+      &lt;BandoSection id="cosa-finanzia" titolo="Cosa finanzia">
+        &lt;div className="prose prose-lg max-w-none">
+          &lt;p className="text-lg leading-relaxed">
+            Avvio nuove imprese, attività libero-professionali, lavoro autonomo in Sud e aree terremoto: macchinari, attrezzature, software, beni innovativi/digitali/sostenibili, voucher fino 50k e investimenti fino 200k
+          &lt;/p>
+        &lt;/div>
+      &lt;/BandoSection>
+
+      &lt;BandoSection id="agevolazioni" titolo="Agevolazioni" variant="muted">
+        &lt;AgevolazioniCard
+          investimentoMin="€ 0 (no minimo)"
+          investimentoMax="€ 200.000 (investimento massimo programma spesa); voucher max €50k (con maggiorazione)"
+          fondoPerduto="100% fondo perduto: Voucher €40-50k; Contributo 75% (fino €120k) + 70% (€120-200k) per investimenti"
+          tassoZero="No finanziamento aggiuntivo; il fondo perduto è la forma principale di agevolazione"
+          tassoInteresse="No tasso; fondo perduto 100%"
+          durataFinanziamento="Rata unica o rate (termine non specificato in dettaglio)"
+          valoreMedio="33k €"
+        />
+      &lt;/BandoSection>
+
+      &lt;BandoSection id="requisiti" titolo="Requisiti e Note">
+        &lt;div className="space-y-6">
+          &lt;Card>
+            &lt;CardHeader>
+              &lt;div className="flex items-center gap-2">
+                &lt;TrendingUp className="h-5 w-5 text-primary" />
+                &lt;CardTitle className="text-lg">Fatturato Massimo</CardTitle>
+              &lt;/div>
+            &lt;/CardHeader>
+            &lt;CardContent>
+              &lt;p>Qualsiasi fatturato per imprese neo-costituite</p>
+            &lt;/CardContent>
+          &lt;/Card>
+
+          &lt;div>
+            &lt;h3 className="mb-4 flex items-center gap-2 text-xl font-semibold">
+              &lt;CheckCircle2 className="h-5 w-5 text-primary" />
+              Note e Requisiti Speciali
+            &lt;/h3>
+            &lt;div className="prose max-w-none rounded-lg border bg-muted/50 p-6">
+              &lt;p className="text-sm leading-relaxed">Dotazione: €445+ milioni. Target: persone fisiche under 35 O disoccupate; studi professionali; liberi professionisti; piccole imprese; priorità giovani, donne, disoccupati, svantaggiati. Localizzazione: Sud + comuni terremoto. Sportello aperto 15 ottobre 2024, domande continuative. Forme agevolazione: voucher €40-50k (100% FP, max €10k maggiorazione beni innovativi/digitali/sostenibili) + investimenti 75% (€0-120k) / 70% (€120-200k). Obblighi mantenimento 5 anni, occupazione. Documentazione: SPID/CIE/CNS, business plan, dichiarazione requisiti</p>
+            &lt;/div>
+          &lt;/div>
+        &lt;/div>
+      &lt;/BandoSection>
+
+      &lt;BandoSection id="come-fare-domanda" titolo="Come fare domanda" variant="muted">
+        &lt;div className="space-y-6">
+          &lt;Card>
+            &lt;CardHeader>
+              &lt;CardTitle>Tipo di Sportello</CardTitle>
+            &lt;/CardHeader>
+            &lt;CardContent>
+              &lt;Badge variant="outline" className="text-base">
+                Sportello
+              &lt;/Badge>
+            &lt;/CardContent>
+          &lt;/Card>
+
+          &lt;div>
+            &lt;h3 className="mb-4 text-xl font-semibold">Richiedi Assistenza</h3>
+            &lt;p className="mb-6 text-muted-foreground">
+              Il nostro team di esperti può assisterti nella compilazione della domanda
+              e nell'ottenimento del finanziamento. Contattaci per una consulenza gratuita.
+            &lt;/p>
+            &lt;CTAButton
+              linkUfficiale="https://www.invitalia.it/incentivi-e-strumenti/resto-al-sud-20"
+              nomeBando="Resto al Sud 2.0"
+            />
+          &lt;/div>
+        &lt;/div>
+      &lt;/BandoSection>
+
+      &lt;BandoSection id="statistiche" titolo="Statistiche e Dati">
+        &lt;StatisticheChart
+          dotazioneAssoluta="356.400.000"
+          numeroBandi="3000"
+          valoreTotale="80-120 milioni"
+          percentualeAccettazione="70-80%"
+          valoreMedio="33k €"
+        />
+      &lt;/BandoSection>
+    &lt;/div>
+  )
+}

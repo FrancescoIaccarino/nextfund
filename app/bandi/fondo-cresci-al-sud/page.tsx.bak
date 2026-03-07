@@ -1,0 +1,178 @@
+import { BandoHero } from "@/components/bandi/BandoHero"
+import { BandoNavigation } from "@/components/bandi/BandoNavigation"
+import { BandoSection } from "@/components/bandi/BandoSection"
+import { AgevolazioniCard } from "@/components/bandi/AgevolazioniCard"
+import { SettoriTags } from "@/components/bandi/SettoriTags"
+import { CTAButton } from "@/components/bandi/CTAButton"
+import { StatisticheChart } from "@/components/bandi/StatisticheChart"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { CheckCircle2, MapPin, Building2, Calendar, TrendingUp } from "lucide-react"
+import type { Metadata } from "next"
+
+export const metadata: Metadata = {
+  title: "Fondo Cresci al Sud | NextFund Advisory",
+  description: "Scopri come ottenere finanziamenti per Fondo Cresci al Sud. Fondo perduto, tasso zero e agevolazioni disponibili.",
+}
+
+const navItems = [
+  { id: "cose", label: "Cos'è" },
+  { id: "chi-si-rivolge", label: "A chi si rivolge" },
+  { id: "cosa-finanzia", label: "Cosa finanzia" },
+  { id: "agevolazioni", label: "Agevolazioni" },
+  { id: "requisiti", label: "Requisiti" },
+  { id: "come-fare-domanda", label: "Come fare domanda" },
+  { id: "statistiche", label: "Statistiche" },
+]
+
+export default function BandoPage() {
+  return (
+    &lt;div>
+      &lt;BandoHero
+        titolo="Fondo Cresci al Sud"
+        sottotitolo="Ministero delle Imprese e del Made in Italy (MIMIT) - gestito da Invitalia"
+        stato="Attivo"
+        categoria="territoriale"
+        descrizione="Crescita dimensionale e competitività PMI del Mezzogiorno: investimenti in capitale di rischio con partner privati (almeno 50%); acquisizione quote mi"
+      />
+
+      &lt;BandoNavigation items={navItems} />
+
+      &lt;BandoSection id="cose" titolo="Cos'è">
+        &lt;div className="prose prose-lg max-w-none">
+          &lt;p className="text-lg leading-relaxed">
+            Crescita dimensionale e competitività PMI del Mezzogiorno: investimenti in capitale di rischio con partner privati (almeno 50%); acquisizione quote minoritarie per sviluppo sostenibile e redditività
+          &lt;/p>
+        &lt;/div>
+      &lt;/BandoSection>
+
+      &lt;BandoSection id="chi-si-rivolge" titolo="A chi si rivolge" variant="muted">
+        &lt;div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          &lt;Card>
+            &lt;CardHeader>
+              &lt;div className="flex items-center gap-2">
+                &lt;Building2 className="h-5 w-5 text-primary" />
+                &lt;CardTitle className="text-lg">Dimensione Azienda</CardTitle>
+              &lt;/div>
+            &lt;/CardHeader>
+            &lt;CardContent>
+              &lt;p>PMI (micro, piccole, medie): &lt;250 dipendenti; fatturato &lt;10M; bilancio &lt;10M; sede legale e operativa nel Mezzogiorno (8 regioni)</p>
+            &lt;/CardContent>
+          &lt;/Card>
+
+          &lt;Card>
+            &lt;CardHeader>
+              &lt;div className="flex items-center gap-2">
+                &lt;Calendar className="h-5 w-5 text-primary" />
+                &lt;CardTitle className="text-lg">Età Azienda</CardTitle>
+              &lt;/div>
+            &lt;/CardHeader>
+            &lt;CardContent>
+              &lt;p>Non esplicitato; impresa costituita e operativa</p>
+            &lt;/CardContent>
+          &lt;/Card>
+
+          &lt;Card>
+            &lt;CardHeader>
+              &lt;div className="flex items-center gap-2">
+                &lt;MapPin className="h-5 w-5 text-primary" />
+                &lt;CardTitle className="text-lg">Localizzazione</CardTitle>
+              &lt;/div>
+            &lt;/CardHeader>
+            &lt;CardContent>
+              &lt;p className="text-sm">Mezzogiorno (8 regioni): Abruzzo, Basilicata, Calabria, Campania, Molise, Puglia, Sardegna, Sicilia. Sede legale e operativa nelle 8 regioni</p>
+            &lt;/CardContent>
+          &lt;/Card>
+        &lt;/div>
+
+        &lt;div className="mt-8">
+          &lt;h3 className="mb-4 text-xl font-semibold">Settori Ammessi</h3>
+          &lt;SettoriTags settori="Tutti i settori: PMI con sede nel Mezzogiorno (Abruzzo, Basilicata, Calabria, Campania, Molise, Puglia, Sardegna, Sicilia) in crescita e competitività" />
+        &lt;/div>
+      &lt;/BandoSection>
+
+      &lt;BandoSection id="cosa-finanzia" titolo="Cosa finanzia">
+        &lt;div className="prose prose-lg max-w-none">
+          &lt;p className="text-lg leading-relaxed">
+            Crescita dimensionale e competitività PMI del Mezzogiorno: investimenti in capitale di rischio con partner privati (almeno 50%); acquisizione quote minoritarie per sviluppo sostenibile e redditività
+          &lt;/p>
+        &lt;/div>
+      &lt;/BandoSection>
+
+      &lt;BandoSection id="agevolazioni" titolo="Agevolazioni" variant="muted">
+        &lt;AgevolazioniCard
+          investimentoMin="€ 1.000.000 (investimento minimo per operazione)"
+          investimentoMax="€ 10.000.000 (investimento massimo per operazione)"
+          fondoPerduto="No fondo perduto; investimento diretto in capitale di rischio con partner privati (co-investimento 50%)"
+          tassoZero="No finanziamento a tasso zero; solo investimento diretto in equity"
+          tassoInteresse="No tasso (investimento equity; nessun rimborso interesse)"
+          durataFinanziamento="5 anni periodo investimento con co-investitori privati"
+          valoreMedio="5.3M €"
+        />
+      &lt;/BandoSection>
+
+      &lt;BandoSection id="requisiti" titolo="Requisiti e Note">
+        &lt;div className="space-y-6">
+          &lt;Card>
+            &lt;CardHeader>
+              &lt;div className="flex items-center gap-2">
+                &lt;TrendingUp className="h-5 w-5 text-primary" />
+                &lt;CardTitle className="text-lg">Fatturato Massimo</CardTitle>
+              &lt;/div>
+            &lt;/CardHeader>
+            &lt;CardContent>
+              &lt;p>Fatturato max €50M; produzione &lt;€10M; &lt;250 dipendenti (PMI Mezzogiorno)</p>
+            &lt;/CardContent>
+          &lt;/Card>
+
+          &lt;div>
+            &lt;h3 className="mb-4 flex items-center gap-2 text-xl font-semibold">
+              &lt;CheckCircle2 className="h-5 w-5 text-primary" />
+              Note e Requisiti Speciali
+            &lt;/h3>
+            &lt;div className="prose max-w-none rounded-lg border bg-muted/50 p-6">
+              &lt;p className="text-sm leading-relaxed">Target PMI Mezzogiorno (8 regioni) con prospettive crescita. Investimento: €1-10M per operazione; max 15% dotazione fondo per singolo investimento. Co-investimento partner privati 50%. Durata 5 anni. Obiettivi: crescita dimensionale, competitività, redditività, Private Equity diffusione Sud. Domande: info.fondocrescialsud@invitalia.it. Dotazione fondo significativa; operazioni in corso</p>
+            &lt;/div>
+          &lt;/div>
+        &lt;/div>
+      &lt;/BandoSection>
+
+      &lt;BandoSection id="come-fare-domanda" titolo="Come fare domanda" variant="muted">
+        &lt;div className="space-y-6">
+          &lt;Card>
+            &lt;CardHeader>
+              &lt;CardTitle>Tipo di Sportello</CardTitle>
+            &lt;/CardHeader>
+            &lt;CardContent>
+              &lt;Badge variant="outline" className="text-base">
+                Non a sportello (Equity)
+              &lt;/Badge>
+            &lt;/CardContent>
+          &lt;/Card>
+
+          &lt;div>
+            &lt;h3 className="mb-4 text-xl font-semibold">Richiedi Assistenza</h3>
+            &lt;p className="mb-6 text-muted-foreground">
+              Il nostro team di esperti può assisterti nella compilazione della domanda
+              e nell'ottenimento del finanziamento. Contattaci per una consulenza gratuita.
+            &lt;/p>
+            &lt;CTAButton
+              linkUfficiale="https://www.invitalia.it/incentivi-e-strumenti/fondo-cresci-al-sud"
+              nomeBando="Fondo Cresci al Sud"
+            />
+          &lt;/div>
+        &lt;/div>
+      &lt;/BandoSection>
+
+      &lt;BandoSection id="statistiche" titolo="Statistiche e Dati">
+        &lt;StatisticheChart
+          dotazioneAssoluta="250.000.000"
+          numeroBandi="10-20 investimenti/anno"
+          valoreTotale="60-100 milioni"
+          percentualeAccettazione="Non disponibile"
+          valoreMedio="5.3M €"
+        />
+      &lt;/BandoSection>
+    &lt;/div>
+  )
+}

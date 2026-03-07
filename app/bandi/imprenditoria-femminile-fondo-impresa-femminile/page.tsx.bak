@@ -1,0 +1,178 @@
+import { BandoHero } from "@/components/bandi/BandoHero"
+import { BandoNavigation } from "@/components/bandi/BandoNavigation"
+import { BandoSection } from "@/components/bandi/BandoSection"
+import { AgevolazioniCard } from "@/components/bandi/AgevolazioniCard"
+import { SettoriTags } from "@/components/bandi/SettoriTags"
+import { CTAButton } from "@/components/bandi/CTAButton"
+import { StatisticheChart } from "@/components/bandi/StatisticheChart"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { CheckCircle2, MapPin, Building2, Calendar, TrendingUp } from "lucide-react"
+import type { Metadata } from "next"
+
+export const metadata: Metadata = {
+  title: "Imprenditoria femminile - Fondo impresa femminile | NextFund Advisory",
+  description: "Scopri come ottenere finanziamenti per Imprenditoria femminile - Fondo impresa femminile. Fondo perduto, tasso zero e agevolazioni disponibili.",
+}
+
+const navItems = [
+  { id: "cose", label: "Cos'è" },
+  { id: "chi-si-rivolge", label: "A chi si rivolge" },
+  { id: "cosa-finanzia", label: "Cosa finanzia" },
+  { id: "agevolazioni", label: "Agevolazioni" },
+  { id: "requisiti", label: "Requisiti" },
+  { id: "come-fare-domanda", label: "Come fare domanda" },
+  { id: "statistiche", label: "Statistiche" },
+]
+
+export default function BandoPage() {
+  return (
+    &lt;div>
+      &lt;BandoHero
+        titolo="Imprenditoria femminile - Fondo impresa femminile"
+        sottotitolo="Ministero delle Imprese e del Made in Italy (MIMIT) e Dipartimento per le Pari Opportunità della Presidenza del Consiglio - gestito da Invitalia"
+        stato="Attivo"
+        categoria="startup"
+        descrizione="Avvio di nuova impresa (fino €250k): macchinari, attrezzature, immobili, software, formazione. Sviluppo impresa esistente (fino €400k): nuove attività"
+      />
+
+      &lt;BandoNavigation items={navItems} />
+
+      &lt;BandoSection id="cose" titolo="Cos'è">
+        &lt;div className="prose prose-lg max-w-none">
+          &lt;p className="text-lg leading-relaxed">
+            Avvio di nuova impresa (fino €250k): macchinari, attrezzature, immobili, software, formazione. Sviluppo impresa esistente (fino €400k): nuove attività, ampliamento, capitale circolante, investimenti generali
+          &lt;/p>
+        &lt;/div>
+      &lt;/BandoSection>
+
+      &lt;BandoSection id="chi-si-rivolge" titolo="A chi si rivolge" variant="muted">
+        &lt;div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          &lt;Card>
+            &lt;CardHeader>
+              &lt;div className="flex items-center gap-2">
+                &lt;Building2 className="h-5 w-5 text-primary" />
+                &lt;CardTitle className="text-lg">Dimensione Azienda</CardTitle>
+              &lt;/div>
+            &lt;/CardHeader>
+            &lt;CardContent>
+              &lt;p>Qualsiasi dimensione: imprese femminili individuali, società di persone (≥60% donne), società di capitali (≥2/3 donne quote e CdA), lavoratrici autonome</p>
+            &lt;/CardContent>
+          &lt;/Card>
+
+          &lt;Card>
+            &lt;CardHeader>
+              &lt;div className="flex items-center gap-2">
+                &lt;Calendar className="h-5 w-5 text-primary" />
+                &lt;CardTitle className="text-lg">Età Azienda</CardTitle>
+              &lt;/div>
+            &lt;/CardHeader>
+            &lt;CardContent>
+              &lt;p>Nuova impresa (&lt;12 mesi) o impresa costituita da max 60 mesi per avvio; per sviluppo impresa attiva >12 mesi</p>
+            &lt;/CardContent>
+          &lt;/Card>
+
+          &lt;Card>
+            &lt;CardHeader>
+              &lt;div className="flex items-center gap-2">
+                &lt;MapPin className="h-5 w-5 text-primary" />
+                &lt;CardTitle className="text-lg">Localizzazione</CardTitle>
+              &lt;/div>
+            &lt;/CardHeader>
+            &lt;CardContent>
+              &lt;p className="text-sm">Italia intera; con particolare attenzione alle regioni del Sud. Sede legale/operativa in Italia</p>
+            &lt;/CardContent>
+          &lt;/Card>
+        &lt;/div>
+
+        &lt;div className="mt-8">
+          &lt;h3 className="mb-4 text-xl font-semibold">Settori Ammessi</h3>
+          &lt;SettoriTags settori="Tutti i settori ammessi: industria, artigianato, trasformazione prodotti agricoli, commercio, servizi, turismo, cultura, creatività, ambiti scientifici e tecnologici" />
+        &lt;/div>
+      &lt;/BandoSection>
+
+      &lt;BandoSection id="cosa-finanzia" titolo="Cosa finanzia">
+        &lt;div className="prose prose-lg max-w-none">
+          &lt;p className="text-lg leading-relaxed">
+            Avvio di nuova impresa (fino €250k): macchinari, attrezzature, immobili, software, formazione. Sviluppo impresa esistente (fino €400k): nuove attività, ampliamento, capitale circolante, investimenti generali
+          &lt;/p>
+        &lt;/div>
+      &lt;/BandoSection>
+
+      &lt;BandoSection id="agevolazioni" titolo="Agevolazioni" variant="muted">
+        &lt;AgevolazioniCard
+          investimentoMin="€ 0 (no minimo); progetto da €0 fino a €250k (avvio) o €400k (sviluppo)"
+          investimentoMax="€ 250.000 per avvio nuova impresa; € 400.000 per impresa attiva >12 mesi"
+          fondoPerduto="Avvio: fino 80-90% (90% per disoccupate); Sviluppo: fino 80% copertura totale (mix FP + finanziamento). Per progetti fino €100k: FP fino 80% (max €50k); fino €250k: FP 50% (max €125k); fino €400k: FP fino 80% (max €320k)"
+          tassoZero="100% tasso zero sulla parte non coperta da fondo perduto; durata 8 anni per sviluppo"
+          tassoInteresse="Tasso zero (0%); per sviluppo con durata rimborso 8 anni"
+          durataFinanziamento="Fino 8 anni per finanziamento sviluppo; preammortamento variabile per tipologia investimento"
+          valoreMedio="187k €"
+        />
+      &lt;/BandoSection>
+
+      &lt;BandoSection id="requisiti" titolo="Requisiti e Note">
+        &lt;div className="space-y-6">
+          &lt;Card>
+            &lt;CardHeader>
+              &lt;div className="flex items-center gap-2">
+                &lt;TrendingUp className="h-5 w-5 text-primary" />
+                &lt;CardTitle className="text-lg">Fatturato Massimo</CardTitle>
+              &lt;/div>
+            &lt;/CardHeader>
+            &lt;CardContent>
+              &lt;p>Qualsiasi fatturato per impresa individuale; nessun limite per altre forme (focus su empowerment femminile)</p>
+            &lt;/CardContent>
+          &lt;/Card>
+
+          &lt;div>
+            &lt;h3 className="mb-4 flex items-center gap-2 text-xl font-semibold">
+              &lt;CheckCircle2 className="h-5 w-5 text-primary" />
+              Note e Requisiti Speciali
+            &lt;/h3>
+            &lt;div className="prose max-w-none rounded-lg border bg-muted/50 p-6">
+              &lt;p className="text-sm leading-relaxed">PNRR: € 400 milioni per creazione imprese femminili (investimento M1C2I7). Programma attivo ottobre 2023 - dicembre 2026. Iniziative: COD(H)ER, Giro d'Italia donne che fanno impresa, acceleratore LiFE per startup innovative femminili, formazione manageriale universitaria, premi per ingegneria biomedica, Premio Intellectual Property Award. Partner: Unioncamere, SIM, UIBM, Fondazione Emblema, PNI Cube, Università Padova, Generation Italy. Comitato Impresa Donna presso MIMIT. Sportello aperto; domande esaminate 90 giorni in ordine cronologico. Documentazione: SPID/CIE/CNS, firma digitale, business plan, requisiti femminilità da verificare</p>
+            &lt;/div>
+          &lt;/div>
+        &lt;/div>
+      &lt;/BandoSection>
+
+      &lt;BandoSection id="come-fare-domanda" titolo="Come fare domanda" variant="muted">
+        &lt;div className="space-y-6">
+          &lt;Card>
+            &lt;CardHeader>
+              &lt;CardTitle>Tipo di Sportello</CardTitle>
+            &lt;/CardHeader>
+            &lt;CardContent>
+              &lt;Badge variant="outline" className="text-base">
+                Sportello
+              &lt;/Badge>
+            &lt;/CardContent>
+          &lt;/Card>
+
+          &lt;div>
+            &lt;h3 className="mb-4 text-xl font-semibold">Richiedi Assistenza</h3>
+            &lt;p className="mb-6 text-muted-foreground">
+              Il nostro team di esperti può assisterti nella compilazione della domanda
+              e nell'ottenimento del finanziamento. Contattaci per una consulenza gratuita.
+            &lt;/p>
+            &lt;CTAButton
+              linkUfficiale="https://www.invitalia.it/incentivi-e-strumenti/imprenditoria-femminile"
+              nomeBando="Imprenditoria femminile - Fondo impresa femminile"
+            />
+          &lt;/div>
+        &lt;/div>
+      &lt;/BandoSection>
+
+      &lt;BandoSection id="statistiche" titolo="Statistiche e Dati">
+        &lt;StatisticheChart
+          dotazioneAssoluta="200.000.000"
+          numeroBandi="350-400 agevolazioni/anno"
+          valoreTotale="60-80 milioni"
+          percentualeAccettazione="70-85%"
+          valoreMedio="187k €"
+        />
+      &lt;/BandoSection>
+    &lt;/div>
+  )
+}

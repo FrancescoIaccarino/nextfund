@@ -104,12 +104,13 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 export const revalidate = 3600
 
-export default async function BandoAutomaticoPage({ params }: { params: { id: string } }) {
+export default async function BandoAutomaticoPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   const supabase = createClient(supabaseUrl, supabaseKey)
   const { data: bando, error } = await supabase
     .from('bandi')
     .select('*')
-    .eq('id', params.id)
+    .eq('id', id)
     .single()
 
   if (error || !bando) notFound()
@@ -195,7 +196,7 @@ export default async function BandoAutomaticoPage({ params }: { params: { id: st
                 label="Contributo"
                 value={[formatCurrency(b.agevolazione_min), formatCurrency(b.agevolazione_max)]
                   .filter(Boolean)
-                  .join(' â ')}
+                  .join(' \u2013 ')}
               />
             )}
             {(b.spesa_min || b.spesa_max) && (
@@ -203,7 +204,7 @@ export default async function BandoAutomaticoPage({ params }: { params: { id: st
                 label="Spesa Ammessa"
                 value={[formatCurrency(b.spesa_min), formatCurrency(b.spesa_max)]
                   .filter(Boolean)
-                  .join(' â ')}
+                  .join(' \u2013 ')}
               />
             )}
             <InfoRow label="Stanziamento" value={formatCurrency(b.stanziamento)} />
@@ -225,7 +226,7 @@ export default async function BandoAutomaticoPage({ params }: { params: { id: st
         )}
 
         {/* Link ufficiale */}
-        {b.link_istituzionale && (
+        {(b.link_istituzionale) && (
           <div className="bg-blue-50 border border-blue-100 rounded-xl p-6 flex items-center justify-between gap-4">
             <div>
               <p className="text-sm font-semibold text-gray-900 mb-1">Vuoi approfondire?</p>

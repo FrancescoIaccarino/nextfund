@@ -3,7 +3,7 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import Link from 'next/link'
 
-// âââ Types ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// --- Types ---
 type Bando = {
   id: string
   titolo: string
@@ -23,10 +23,10 @@ type Bando = {
   stanziamento: string | null
 }
 
-// âââ Helpers ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// --- Helpers ---
 function parseVals(str: string | null): string[] {
   if (!str) return []
-  return str.split(/[|,]/).map(s => s.trim()).filter(Boolean)
+  return str.split(/[|,;]/).map(s => s.trim()).filter(Boolean)
 }
 
 function uniqueVals(bandi: Bando[], field: keyof Bando): string[] {
@@ -41,9 +41,10 @@ function fmtCurrency(val: string | null): string | null {
   if (!val) return null
   const n = parseFloat(val)
   if (isNaN(n) || n <= 0) return null
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1).replace('.0', '')}M â¬`
-  if (n >= 1_000) return `${Math.round(n / 1_000)}K â¬`
-  return `${n.toLocaleString('it-IT')} â¬`
+  const eur = '\u20AC'
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1).replace('.0', '')}M ${eur}`
+  if (n >= 1_000) return `${Math.round(n / 1_000)}K ${eur}`
+  return `${n.toLocaleString('it-IT')} ${eur}`
 }
 
 function fmtDate(d: string | null): string | null {
@@ -59,7 +60,7 @@ function fmtDate(d: string | null): string | null {
   }
 }
 
-// âââ Status config âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// --- Status config ---
 const STATO: Record<string, { label: string; dot: string; pill: string; stripe: string }> = {
   aperto: {
     label: 'Aperto',
@@ -81,7 +82,9 @@ const STATO: Record<string, { label: string; dot: string; pill: string; stripe: 
   },
 }
 
-// âââ BandoCard âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+const PAGE_SIZE = 50
+
+// --- BandoCard ---
 function BandoCard({ b }: { b: Bando }) {
   const cfg = STATO[b.stato] ?? {
     label: b.stato,
@@ -89,11 +92,9 @@ function BandoCard({ b }: { b: Bando }) {
     pill: 'bg-gray-100 text-gray-700 border-gray-200',
     stripe: 'bg-gray-400',
   }
-
   const ente = b.soggetto_concedente
     ? b.soggetto_concedente.replace(/\\/g, '').split(/[,|]/)[0].trim()
     : null
-
   const settoriTags = parseVals(b.settori).slice(0, 2)
   const extraTags = Math.max(0, parseVals(b.settori).length - 2)
   const budget = fmtCurrency(b.agevolazione_max) ?? fmtCurrency(b.stanziamento)
@@ -106,7 +107,6 @@ function BandoCard({ b }: { b: Bando }) {
     >
       {/* Top colour stripe */}
       <div className={`h-1 w-full ${cfg.stripe} group-hover:h-1.5 transition-all`} />
-
       <div className="flex flex-col gap-3 p-5 flex-1">
         {/* Header: badge + scadenza */}
         <div className="flex items-start justify-between gap-2 min-h-[28px]">
@@ -122,17 +122,14 @@ function BandoCard({ b }: { b: Bando }) {
             </span>
           )}
         </div>
-
-        {/* Title â 3 lines max */}
+        {/* Title - 3 lines max */}
         <h3 className="text-sm font-semibold text-gray-900 leading-snug line-clamp-3 group-hover:text-blue-700 transition-colors flex-1">
           {b.titolo || 'Titolo non disponibile'}
         </h3>
-
         {/* Entity */}
         {ente && (
           <p className="text-xs text-gray-500 line-clamp-1 -mt-1">{ente}</p>
         )}
-
         {/* Footer: tags + budget */}
         <div className="flex items-end justify-between gap-2 pt-3 border-t border-gray-100 mt-auto">
           <div className="flex flex-wrap gap-1 min-w-0">
@@ -166,7 +163,7 @@ function BandoCard({ b }: { b: Bando }) {
   )
 }
 
-// âââ FilterCombobox ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// --- FilterCombobox ---
 function FilterCombobox({
   label,
   options,
@@ -226,7 +223,6 @@ function FilterCombobox({
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>
       </button>
-
       {open && (
         <div className="absolute z-50 top-full left-0 right-0 mt-1.5 bg-[#1b2a42] border border-white/10 rounded-xl shadow-2xl overflow-hidden">
           {options.length > 6 && (
@@ -247,9 +243,7 @@ function FilterCombobox({
               type="button"
               onClick={() => { onChange(''); setOpen(false); setSearch('') }}
               className={`w-full text-left px-3 py-2 text-sm transition-colors ${
-                !value
-                  ? 'text-blue-400 bg-blue-500/10'
-                  : 'text-gray-400 hover:bg-white/5 hover:text-gray-300'
+                !value ? 'text-blue-400 bg-blue-500/10' : 'text-gray-400 hover:bg-white/5 hover:text-gray-300'
               }`}
             >
               Tutti
@@ -280,7 +274,72 @@ function FilterCombobox({
   )
 }
 
-// âââ Main BandiFilters âââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// --- Pagination ---
+function Pagination({
+  page,
+  totalPages,
+  onPage,
+}: {
+  page: number
+  totalPages: number
+  onPage: (p: number) => void
+}) {
+  if (totalPages <= 1) return null
+
+  const MAX_VISIBLE = 7
+  let startPage = Math.max(1, page - Math.floor(MAX_VISIBLE / 2))
+  const endPage = Math.min(totalPages, startPage + MAX_VISIBLE - 1)
+  if (endPage - startPage < MAX_VISIBLE - 1) {
+    startPage = Math.max(1, endPage - MAX_VISIBLE + 1)
+  }
+  const pages = Array.from({ length: endPage - startPage + 1 }, (_, i) => startPage + i)
+
+  return (
+    <div className="flex items-center justify-center gap-1.5 py-8">
+      <button
+        onClick={() => onPage(Math.max(1, page - 1))}
+        disabled={page === 1}
+        className="px-3 py-1.5 rounded-lg text-sm border border-gray-200 text-gray-500 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+      >
+        &lsaquo;
+      </button>
+      {startPage > 1 && (
+        <>
+          <button onClick={() => onPage(1)} className="px-3 py-1.5 rounded-lg text-sm border border-gray-200 text-gray-600 hover:bg-gray-100 transition-colors">1</button>
+          {startPage > 2 && <span className="text-gray-400 text-sm px-1">...</span>}
+        </>
+      )}
+      {pages.map(p => (
+        <button
+          key={p}
+          onClick={() => onPage(p)}
+          className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${
+            p === page
+              ? 'bg-blue-600 border-blue-600 text-white font-medium'
+              : 'border-gray-200 text-gray-600 hover:bg-gray-100'
+          }`}
+        >
+          {p}
+        </button>
+      ))}
+      {endPage < totalPages && (
+        <>
+          {endPage < totalPages - 1 && <span className="text-gray-400 text-sm px-1">...</span>}
+          <button onClick={() => onPage(totalPages)} className="px-3 py-1.5 rounded-lg text-sm border border-gray-200 text-gray-600 hover:bg-gray-100 transition-colors">{totalPages}</button>
+        </>
+      )}
+      <button
+        onClick={() => onPage(Math.min(totalPages, page + 1))}
+        disabled={page === totalPages}
+        className="px-3 py-1.5 rounded-lg text-sm border border-gray-200 text-gray-500 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+      >
+        &rsaquo;
+      </button>
+    </div>
+  )
+}
+
+// --- Main BandiFilters ---
 export default function BandiFilters({ bandi }: { bandi: Bando[] }) {
   const [search, setSearch] = useState('')
   const [stato, setStato] = useState('')
@@ -289,6 +348,7 @@ export default function BandiFilters({ bandi }: { bandi: Bando[] }) {
   const [regione, setRegione] = useState('')
   const [soggetto, setSoggetto] = useState('')
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [page, setPage] = useState(1)
 
   // Option lists
   const settori = useMemo(() => uniqueVals(bandi, 'settori'), [bandi])
@@ -322,8 +382,7 @@ export default function BandiFilters({ bandi }: { bandi: Bando[] }) {
         !b.titolo?.toLowerCase().includes(q) &&
         !b.descrizione?.toLowerCase().includes(q) &&
         !b.soggetto_concedente?.toLowerCase().includes(q)
-      )
-        return false
+      ) return false
       if (stato && b.stato !== stato) return false
       if (settore && !parseVals(b.settori).includes(settore)) return false
       if (dimensione && !parseVals(b.dimensioni).includes(dimensione)) return false
@@ -336,6 +395,16 @@ export default function BandiFilters({ bandi }: { bandi: Bando[] }) {
     })
   }, [bandi, search, stato, settore, dimensione, regione, soggetto])
 
+  // Reset page when filters change
+  useEffect(() => { setPage(1) }, [search, stato, settore, dimensione, regione, soggetto])
+
+  // Pagination
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE)
+  const paginatedFiltered = useMemo(
+    () => filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+    [filtered, page]
+  )
+
   const reset = () => {
     setSearch('')
     setStato('')
@@ -343,9 +412,10 @@ export default function BandiFilters({ bandi }: { bandi: Bando[] }) {
     setDimensione('')
     setRegione('')
     setSoggetto('')
+    setPage(1)
   }
 
-  // ââ Sidebar inner âââââââââââââââââââââââââââââââââââââââââââââ
+  // -- Sidebar inner --
   const SidebarContent = (
     <div className="flex flex-col h-full">
       {/* Header */}
@@ -370,10 +440,9 @@ export default function BandiFilters({ bandi }: { bandi: Bando[] }) {
           )}
         </div>
       </div>
-
       {/* Scrollable filter area */}
       <div className="flex-1 overflow-y-auto px-5 py-5 space-y-7">
-        {/* Stato â button group */}
+        {/* Stato - button group */}
         <div>
           <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">
             Stato Bando
@@ -382,9 +451,9 @@ export default function BandiFilters({ bandi }: { bandi: Bando[] }) {
             {(
               [
                 { v: '', label: 'Tutti i bandi' },
-                { v: 'aperto', label: 'â Aperti' },
-                { v: 'in_arrivo', label: 'â In Arrivo' },
-                { v: 'chiuso', label: 'â Chiusi' },
+                { v: 'aperto', label: 'Aperti' },
+                { v: 'in_arrivo', label: 'In Arrivo' },
+                { v: 'chiuso', label: 'Chiusi' },
               ] as const
             ).map(({ v, label }) => (
               <button
@@ -411,9 +480,7 @@ export default function BandiFilters({ bandi }: { bandi: Bando[] }) {
                 </span>
                 <span
                   className={`text-xs font-mono px-1.5 py-0.5 rounded-md ${
-                    stato === v
-                      ? 'bg-blue-500/20 text-blue-300'
-                      : 'bg-white/5 text-gray-500'
+                    stato === v ? 'bg-blue-500/20 text-blue-300' : 'bg-white/5 text-gray-500'
                   }`}
                 >
                   {counts[v] ?? 0}
@@ -422,18 +489,16 @@ export default function BandiFilters({ bandi }: { bandi: Bando[] }) {
             ))}
           </div>
         </div>
-
         {/* Settore */}
         {settori.length > 0 && (
           <FilterCombobox
-            label="Settore AttivitÃ "
+            label="Settore Attivit\u00E0"
             options={settori}
             value={settore}
             onChange={setSettore}
             placeholder="Tutti i settori"
           />
         )}
-
         {/* Dimensione */}
         {dimensioni.length > 0 && (
           <FilterCombobox
@@ -444,7 +509,6 @@ export default function BandiFilters({ bandi }: { bandi: Bando[] }) {
             placeholder="Tutte le dimensioni"
           />
         )}
-
         {/* Regione */}
         {regioni.length > 0 && (
           <FilterCombobox
@@ -455,7 +519,6 @@ export default function BandiFilters({ bandi }: { bandi: Bando[] }) {
             placeholder="Tutte le regioni"
           />
         )}
-
         {/* Ente Concedente */}
         {soggetti.length > 0 && (
           <FilterCombobox
@@ -472,12 +535,12 @@ export default function BandiFilters({ bandi }: { bandi: Bando[] }) {
 
   return (
     <div className="flex bg-gray-50" style={{ minHeight: 'calc(100vh - 80px)' }}>
-      {/* ââ Desktop sidebar âââââââââââââââââââââââââââââââââââââ */}
+      {/* -- Desktop sidebar -- */}
       <aside className="hidden lg:flex lg:w-64 xl:w-72 shrink-0 flex-col bg-[#0d1a2d] border-r border-white/5">
         {SidebarContent}
       </aside>
 
-      {/* ââ Mobile drawer âââââââââââââââââââââââââââââââââââââââ */}
+      {/* -- Mobile drawer -- */}
       {drawerOpen && (
         <div className="lg:hidden fixed inset-0 z-50 flex">
           <div
@@ -498,17 +561,22 @@ export default function BandiFilters({ bandi }: { bandi: Bando[] }) {
         </div>
       )}
 
-      {/* ââ Main content ââââââââââââââââââââââââââââââââââââââââ */}
+      {/* -- Main content -- */}
       <main className="flex-1 flex flex-col min-w-0">
-        {/* Top search bar */}
-        <div className="bg-white border-b border-gray-200 px-4 sm:px-6 py-3 flex items-center gap-3 sticky top-0 z-20">
+        {/* Top search bar - sticks below the fixed header (h-16) */}
+        <div className="bg-white border-b border-gray-200 px-4 sm:px-6 py-3 flex items-center gap-3 sticky top-16 z-20">
           {/* Mobile: filter toggle */}
           <button
             onClick={() => setDrawerOpen(true)}
-            className="lg:hidden flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-xl text-sm text-gray-600 hover:bs-gray-50 transition-colors shrink-0"
+            className="lg:hidden flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-xl text-sm text-gray-600 hover:bg-gray-50 transition-colors shrink-0"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z"
+              />
             </svg>
             <span>Filtri</span>
             {activeCount > 0 && (
@@ -517,7 +585,6 @@ export default function BandiFilters({ bandi }: { bandi: Bando[] }) {
               </span>
             )}
           </button>
-
           {/* Search input */}
           <div className="relative flex-1">
             <svg
@@ -526,7 +593,12 @@ export default function BandiFilters({ bandi }: { bandi: Bando[] }) {
               viewBox="0 0 24 24"
               stroke="currentColor"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
             </svg>
             <input
               type="search"
@@ -536,7 +608,6 @@ export default function BandiFilters({ bandi }: { bandi: Bando[] }) {
               className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-400 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-white transition-all"
             />
           </div>
-
           {/* Result count */}
           <span className="hidden sm:flex items-center gap-1.5 text-sm text-gray-500 shrink-0 tabular-nums">
             <span className="font-semibold text-gray-800">{filtered.length}</span>
@@ -550,7 +621,12 @@ export default function BandiFilters({ bandi }: { bandi: Bando[] }) {
             <div className="flex flex-col items-center justify-center py-24 text-center">
               <div className="w-16 h-16 bg-white rounded-2xl border border-gray-200 flex items-center justify-center mb-5 shadow-sm">
                 <svg className="w-8 h-8 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1.5}
+                    d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
                 </svg>
               </div>
               <h3 className="text-gray-800 font-semibold text-lg mb-1">
@@ -561,17 +637,20 @@ export default function BandiFilters({ bandi }: { bandi: Bando[] }) {
               </p>
               <button
                 onClick={reset}
-                className="px-5 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bw-blue-700 active:scale-95 transition-all"
+                className="px-5 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700 active:scale-95 transition-all"
               >
                 Azzera filtri
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
-              {filtered.map(b => (
-                <BandoCard key={b.id} b={b} />
-              ))}
-            </div>
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
+                {paginatedFiltered.map(b => (
+                  <BandoCard key={b.id} b={b} />
+                ))}
+              </div>
+              <Pagination page={page} totalPages={totalPages} onPage={p => { setPage(p); window.scrollTo({ top: 0, behavior: 'smooth' }) }} />
+            </>
           )}
         </div>
       </main>

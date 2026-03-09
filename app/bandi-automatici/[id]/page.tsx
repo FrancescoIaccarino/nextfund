@@ -1,7 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { PageHeader } from '@/components/layout/PageHeader'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -35,19 +34,31 @@ type Bando = {
   cambio_territoriale: string | null
 }
 
+// --- Helpers ---
+function parseVals(str: string | null): string[] {
+  if (!str) return []
+  return str.split(/[|,;]/).map(s => s.trim()).filter(Boolean)
+}
+
 function StatoBadge({ stato }: { stato: string }) {
-  const colors: Record<string, string> = {
-    aperto: 'bg-green-100 text-green-800 border border-green-200',
+  const styles: Record<string, string> = {
+    aperto: 'bg-emerald-100 text-emerald-800 border border-emerald-200',
     chiuso: 'bg-red-100 text-red-800 border border-red-200',
-    in_arrivo: 'bg-yellow-100 text-yellow-800 border border-yellow-200',
+    in_arrivo: 'bg-amber-100 text-amber-800 border border-amber-200',
+  }
+  const dots: Record<string, string> = {
+    aperto: 'bg-emerald-500',
+    chiuso: 'bg-red-400',
+    in_arrivo: 'bg-amber-400',
   }
   const labels: Record<string, string> = {
-    aperto: 'â Aperto',
-    chiuso: 'â Chiuso',
-    in_arrivo: 'â In Arrivo',
+    aperto: 'Aperto',
+    chiuso: 'Chiuso',
+    in_arrivo: 'In Arrivo',
   }
   return (
-    <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${colors[stato] ?? 'bg-gray-100 text-gray-700'}`}>
+    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${styles[stato] ?? 'bg-gray-100 text-gray-700'}`}>
+      <span className={`w-1.5 h-1.5 rounded-full ${dots[stato] ?? 'bg-gray-400'}`} />
       {labels[stato] ?? stato}
     </span>
   )
@@ -65,16 +76,28 @@ function formatCurrency(val: string | null) {
   return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(num)
 }
 
-function TagList({ value, label }: { value: string | null; label: string }) {
+// Color-coded tag list per field type
+const TAG_COLORS: Record<string, string> = {
+  settori:           'bg-blue-50 text-blue-700 border-blue-100',
+  forma_agevolazione:'bg-purple-50 text-purple-700 border-purple-100',
+  dimensioni:        'bg-teal-50 text-teal-700 border-teal-100',
+  tipologia_soggetto:'bg-amber-50 text-amber-800 border-amber-100',
+  regioni:           'bg-slate-100 text-slate-700 border-slate-200',
+  comuni:            'bg-slate-100 text-slate-600 border-slate-200',
+  codici_ateco:      'bg-indigo-50 text-indigo-700 border-indigo-100',
+}
+
+function TagList({ value, label, colorKey }: { value: string | null; label: string; colorKey: keyof typeof TAG_COLORS }) {
   if (!value) return null
-  const items = value.split('|').map(s => s.trim()).filter(Boolean)
+  const items = parseVals(value)
   if (items.length === 0) return null
+  const cls = TAG_COLORS[colorKey] ?? TAG_COLORS.settori
   return (
     <div>
       <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">{label}</p>
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-1.5">
         {items.map((item, i) => (
-          <span key={i} className="bg-blue-50 text-blue-800 text-xs px-2 py-1 rounded-md border border-blue-100">
+          <span key={i} className={`text-xs px-2.5 py-1 rounded-full border font-medium ${cls}`}>
             {item}
           </span>
         ))}
@@ -104,7 +127,11 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 export const revalidate = 3600
 
-export default async function BandoAutomaticoPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function BandoAutomaticoPage({
+  params,
+}: {
+  params: Promise<{ id: string }>
+}) {
   const { id } = await params
   const supabase = createClient(supabaseUrl, supabaseKey)
   const { data: bando, error } = await supabase
@@ -121,20 +148,23 @@ export default async function BandoAutomaticoPage({ params }: { params: Promise<
     <>
       {/* Header */}
       <div className="bg-[#0a1628] text-white">
-        <div className="max-w-5xl mx-auto px-4 py-10">
+        <div className="max-w-5xl mx-auto px-4 pt-24 pb-10">
           <Link
             href="/bandi-updated"
-            className="text-blue-300 hover:text-white text-sm mb-6 inline-flex items-center gap-1 transition-colors"
+            className="text-blue-300 hover:text-white text-sm mb-6 inline-flex items-center gap-1.5 transition-colors"
           >
-            â Torna ai Bandi Automatici
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Torna ai Bandi Automatici
           </Link>
-          <div className="flex flex-wrap items-center gap-3 mb-4">
+          <div className="flex flex-wrap items-center gap-2 mb-4">
             <StatoBadge stato={b.stato} />
-            {b.forma_agevolazione && (
-              <span className="text-xs bg-white/10 text-white/80 px-3 py-1 rounded-full border border-white/20">
-                {b.forma_agevolazione}
+            {parseVals(b.forma_agevolazione).map((f, i) => (
+              <span key={i} className="text-xs bg-purple-500/20 text-purple-200 px-3 py-1 rounded-full border border-purple-500/30">
+                {f}
               </span>
-            )}
+            ))}
           </div>
           <h1 className="text-2xl md:text-3xl font-bold leading-tight mb-3">{b.titolo}</h1>
           {b.soggetto_concedente && (
@@ -156,7 +186,6 @@ export default async function BandoAutomaticoPage({ params }: { params: Promise<
 
       {/* Body */}
       <div className="max-w-5xl mx-auto px-4 py-10 space-y-6">
-
         {/* Obiettivi / Descrizione */}
         {(b.obiettivi || b.descrizione) && (
           <Section title="Obiettivi">
@@ -166,14 +195,14 @@ export default async function BandoAutomaticoPage({ params }: { params: Promise<
         )}
 
         {/* A chi si rivolge */}
-        y(b.tipologia_soggetto || b.dimensioni || b.regioni || b.comuni || b.settori || b.codici_ateco) && (
+        {(b.tipologia_soggetto || b.dimensioni || b.regioni || b.comuni || b.settori || b.codici_ateco) && (
           <Section title="A chi si rivolge">
-            <TagList value={b.tipologia_soggetto} label="Tipologia Soggetto" />
-            <TagList value={b.dimensioni} label="Dimensione Azienda" />
-            <TagList value={b.regioni} label="Regioni" />
-            <TagList value={b.comuni} label="Comuni" />
-            <TagList value={b.settori} label="Settori Ammessi" />
-            <TagList value={b.codici_ateco} label="Codici ATECO" />
+            <TagList value={b.tipologia_soggetto} label="Tipologia Soggetto" colorKey="tipologia_soggetto" />
+            <TagList value={b.dimensioni} label="Dimensione Azienda" colorKey="dimensioni" />
+            <TagList value={b.regioni} label="Regioni" colorKey="regioni" />
+            {b.comuni && <TagList value={b.comuni} label="Comuni" colorKey="comuni" />}
+            <TagList value={b.settori} label="Settori Ammessi" colorKey="settori" />
+            {b.codici_ateco && <TagList value={b.codici_ateco} label="Codici ATECO" colorKey="codici_ateco" />}
           </Section>
         )}
 
@@ -190,7 +219,7 @@ export default async function BandoAutomaticoPage({ params }: { params: Promise<
         {/* Agevolazioni */}
         {(b.forma_agevolazione || b.agevolazione_min || b.agevolazione_max || b.spesa_min || b.spesa_max || b.stanziamento) && (
           <Section title="Agevolazioni">
-            <InfoRow label="Forma" value={b.forma_agevolazione} />
+            <TagList value={b.forma_agevolazione} label="Forma di Agevolazione" colorKey="forma_agevolazione" />
             {(b.agevolazione_min || b.agevolazione_max) && (
               <InfoRow
                 label="Contributo"
@@ -236,19 +265,27 @@ export default async function BandoAutomaticoPage({ params }: { params: Promise<
               href={b.link_istituzionale}
               target="_blank"
               rel="noopener noreferrer"
-              className="shrink-0 bg-[#0a1628] text-white text-sm font-medium px-5 py-2.5 rounded-lg hover:bg-[#1a2e4a] transition-colors"
+              className="shrink-0 inline-flex items-center gap-2 bg-[#0a1628] text-white text-sm font-medium px-5 py-2.5 rounded-lg hover:bg-[#1a2e4a] transition-colors"
             >
-              Sito ufficiale â
+              Sito ufficiale
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
             </a>
           </div>
         )}
 
         <p className="text-center text-xs text-gray-400 pt-4">
           Dati da{' '}
-          <a href="https://www.incentivi.gov.it/it/open-data" target="_blank" rel="noopener noreferrer" className="underline hover:text-gray-600">
+          <a
+            href="https://www.incentivi.gov.it/it/open-data"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline hover:text-gray-600"
+          >
             incentivi.gov.it
-          </a>{' '}
-          Â· Licenza IODL v2.0
+          </a>
+          {' '}&middot; Licenza IODL v2.0
         </p>
       </div>
     </>
